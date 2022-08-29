@@ -1,0 +1,66 @@
+version: '3.8'
+
+volumes:
+  postgres_data:
+  static:
+  redis:
+
+services:
+  postgres:
+    container_name: gallery-postgres
+    build:
+      context: ./postgres
+    env_file:
+      - config/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    restart: always
+
+  gallery:
+    build: ./config
+    restart: always
+    env_file:
+      - config/.env
+    volumes:
+      - ./config:/app/
+      - static:/app/static
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    command: run_django
+      
+  huey:
+    build:
+      context: ./config
+    container_name: gallery-huey
+    volumes:
+      - ./config/:/app/
+    depends_on:
+      - postgres
+      - redis
+    command: run_huey
+  
+  redis:
+    container_name: redis
+    image: redis:5.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis:/data
+    restart: always
+  
+  nginx:
+    build:
+      context: ./nginx
+    container_name: gallery-nginx
+    depends_on:
+      - gallery
+    ports:
+      - "80:7000"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - static:/static
