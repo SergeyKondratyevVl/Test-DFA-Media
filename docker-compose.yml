@@ -31,18 +31,6 @@ services:
     depends_on:
       - postgres
       - redis
-    command: run_django
-      
-  huey:
-    build:
-      context: ./config
-    container_name: gallery-huey
-    volumes:
-      - ./config/:/app/
-    depends_on:
-      - postgres
-      - redis
-    command: run_huey
   
   redis:
     container_name: redis
